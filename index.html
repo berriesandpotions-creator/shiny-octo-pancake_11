@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kisan Friend.AI - Advanced Farming Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #1a4d3a 0%, #0e2818 100%);
+      color: #fff;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app-wrapper {
+      width: 100%;
+      max-width: 900px;
+      height: 95vh;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #2d5a3d;
+      border-radius: 20px;
+      background: linear-gradient(145deg, #1e3a2e 0%, #0f1f16 100%);
+      box-shadow: 0 0 20px rgba(0, 100, 50, 0.3);
+      overflow: hidden;
+    }
+
+    .app-header {
+      padding: 16px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 22px;
+      background: linear-gradient(90deg, #2d5a3d, #1a4d3a);
+      border-bottom: 1px solid #4a7c59;
+      color: #a8e6cf;
+      position: relative;
+    }
+
+    .status-indicator {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 10px;
+      height: 10px;
+      background: #4ade80;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .voice-status {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: #a8e6cf;
+      display: none;
+    }
+
+    .voice-status.speaking {
+      display: block;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .chat-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      max-width: 85%;
+      margin: 8px 0;
+      padding: 12px 16px;
+      border-radius: 14px;
+      animation: fadeIn 0.3s ease;
+      word-wrap: break-word;
+      line-height: 1.6;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #4a7c59, #2d5a3d);
+      color: #fff;
+      border-bottom-right-radius: 0;
+    }
+
+    .bot {
+      align-self: flex-start;
+      background: linear-gradient(135deg, #2a4a35, #1a3025);
+      border-bottom-left-radius: 0;
+      border-left: 3px solid #4a7c59;
+    }
+
+    .bot.speaking {
+      border-left: 3px solid #a8e6cf;
+      box-shadow: 0 0 12px rgba(168, 230, 207, 0.3);
+    }
+
+    .system {
+      align-self: center;
+      background: linear-gradient(135deg, #3d5a4a, #2d4a3a);
+      border-radius: 20px;
+      font-size: 14px;
+      max-width: 90%;
+      text-align: center;
+      border: 1px solid #4a7c59;
+    }
+
+    .voice-controls {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: none;
+      gap: 4px;
+    }
+
+    .bot.speaking .voice-controls {
+      display: flex;
+    }
+
+    .voice-btn {
+      background: rgba(168, 230, 207, 0.2);
+      border: 1px solid #a8e6cf;
+      color: #a8e6cf;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .voice-btn:hover {
+      background: #a8e6cf;
+      color: #1a3025;
+    }
+
+    .price-table {
+      background: rgba(26, 48, 37, 0.8);
+      border: 1px solid #4a7c59;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 14px;
+    }
+
+    .price-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .price-table th, .price-table td {
+      padding: 6px 8px;
+      text-align: left;
+      border-bottom: 1px solid #4a7c59;
+    }
+
+    .price-table th {
+      color: #a8e6cf;
+      font-weight: 600;
+    }
+
+    /* Typing Dots */
+    .typing-dots {
+      display: inline-block;
+    }
+
+    .typing-dots span {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin: 0 2px;
+      background: #a8e6cf;
+      border-radius: 50%;
+      animation: blink 1.4s infinite both;
+    }
+
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.9); }
+      40% { opacity: 1; transform: scale(1.2); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .input-panel {
+      display: flex;
+      padding: 12px;
+      border-top: 1px solid #2d5a3d;
+      background: linear-gradient(90deg, #1a3025, #2a4a35);
+    }
+
+    .input-panel input {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 16px;
+      background: rgba(26, 48, 37, 0.8);
+      border: 1px solid #4a7c59;
+      color: white;
+      border-radius: 12px;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    .input-panel input:focus {
+      border-color: #a8e6cf;
+      box-shadow: 0 0 8px rgba(168, 230, 207, 0.3);
+    }
+
+    .input-panel button {
+      background: linear-gradient(135deg, #4a7c59, #2d5a3d);
+      color: #fff;
+      border: 1px solid #4a7c59;
+      padding: 12px 16px;
+      margin-left: 8px;
+      border-radius: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+      min-width: 50px;
+    }
+
+    .input-panel button:hover {
+      background: linear-gradient(135deg, #a8e6cf, #4a7c59);
+      color: #1a3025;
+      transform: translateY(-2px);
+    }
+
+    .input-panel button.active {
+      background: linear-gradient(135deg, #a8e6cf, #4a7c59);
+      color: #1a3025;
+    }
+
+    .voice-control-panel {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(26, 48, 37, 0.8);
+      border-top: 1px solid #2d5a3d;
+      border-bottom: 1px solid #2d5a3d;
+      display: none;
+    }
+
+    .voice-control-panel.active {
+      display: flex;
+    }
+
+    .voice-control-panel button {
+      background: linear-gradient(135deg, #4a7c59, #2d5a3d);
+      color: #fff;
+      border: 1px solid #4a7c59;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .voice-control-panel button:hover {
+      background: linear-gradient(135deg, #a8e6cf, #4a7c59);
+      color: #1a3025;
+    }
+
+    .voice-control-panel .voice-info {
+      flex: 1;
+      font-size: 12px;
+      color: #a8e6cf;
+    }
+
+    /* Scrollbar */
+    .chat-panel::-webkit-scrollbar {
+      width: 8px;
+    }
+    .chat-panel::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #4a7c59, #2d5a3d);
+      border-radius: 4px;
+    }
+
+    /* LOADING SCREEN */
+    #loading-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a4d3a 0%, #0e2818 100%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Poppins', sans-serif;
+      color: white;
+      transition: opacity 0.5s ease;
+    }
+
+    .farming-orbit {
+      width: 60px;
+      height: 60px;
+      border: 5px solid #4a7c59;
+      border-top: 5px solid #a8e6cf;
+      border-radius: 50%;
+      animation: spin 1.2s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* AVATAR POPUP */
+    #avatar-popup {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a4d3a 0%, #0e2818 100%);
+      z-index: 9998;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Poppins', sans-serif;
+      color: white;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.5s ease;
+    }
+
+    #avatar-popup img {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      margin-bottom: 20px;
+      box-shadow: 0 0 30px rgba(168, 230, 207, 0.5);
+      border: 3px solid #4a7c59;
+    }
+
+    #avatar-popup h2 {
+      font-size: 28px;
+      font-weight: 600;
+      color: #a8e6cf;
+      margin-bottom: 10px;
+    }
+
+    #avatar-popup p {
+      font-size: 16px;
+      color: #4a7c59;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    /* Farmer Info Form */
+    .farmer-form {
+      background: linear-gradient(135deg, #2a4a35, #1a3025);
+      border: 1px solid #4a7c59;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 10px 0;
+      max-width: 90%;
+      align-self: center;
+    }
+
+    .farmer-form h3 {
+      color: #a8e6cf;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+      color: #4a7c59;
+      font-size: 14px;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 8px 12px;
+      background: rgba(26, 48, 37, 0.8);
+      border: 1px solid #4a7c59;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: #a8e6cf;
+    }
+
+    .form-submit {
+      background: linear-gradient(135deg, #4a7c59, #2d5a3d);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+
+    .form-submit:hover {
+      background: linear-gradient(135deg, #a8e6cf, #4a7c59);
+      color: #1a3025;
+    }
+
+    /* Quick Action Buttons */
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
+      justify-content: center;
+    }
+
+    .quick-btn {
+      background: linear-gradient(135deg, #3d5a4a, #2d4a3a);
+      color: #a8e6cf;
+      border: 1px solid #4a7c59;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .quick-btn:hover {
+      background: linear-gradient(135deg, #4a7c59, #2d5a3d);
+      color: white;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 600px) {
+      .app-wrapper {
+        height: 100vh;
+        border-radius: 0;
+        max-width: 100%;
+      }
+      
+      .message {
+        max-width: 95%;
+      }
+      
+      .farmer-form {
+        max-width: 95%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loading-screen">
+    <div class="farming-orbit"></div>
+    <h2>Initializing Kisan Friend.AI...</h2>
+  </div>
+  
+  <div id="avatar-popup">
+    <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=400&fit=crop&crop=face" alt="Kisan Friend AI Avatar" />
+    <h2>Welcome to Kisan Friend.AI</h2>
+    <p>Your advanced farming companion with real-time market data, current prices, and personalized agricultural guidance.</p>
+  </div>
+  
+  <main class="app-wrapper" style="display: none;">
+    <header class="app-header">
+      <div class="voice-status" id="voice-status">🔊 Speaking...</div>
+      🌱 Kisan Friend.AI - Advanced Farming Assistant
+      <div class="status-indicator" title="Connected to live market data"></div>
+    </header>
+    
+    <div class="voice-control-panel" id="voice-control-panel">
+      <div class="voice-info" id="voice-info">🔊 AI is speaking...</div>
+      <button onclick="pauseVoice()">⏸️ Pause</button>
+      <button onclick="resumeVoice()">▶️ Resume</button>
+      <button onclick="stopVoice()">⏹️ Stop</button>
+    </div>
+    
+    <section class="chat-panel" id="chat-container">
+      <div class="message system">🚜 Welcome to Kisan Friend.AI! I provide real-time market prices, current loan rates, and personalized farming advice based on your location and farm details.</div>
+      <div class="message bot">👋 Hello! I'm your advanced Kisan Friend.AI assistant with access to current market data and pricing information. To provide you with the most accurate and profitable farming advice, I'll need some details about your farm. Let's begin!</div>
+    </section>
+    <footer class="input-panel">
+      <input type="text" id="user-input" placeholder="Ask about crops, prices, loans, implements..." />
+      <button id="mic-btn">🎤</button>
+      <button id="send-btn">➤</button>
+    </footer>
+  </main>
+  
+  <script>
+    const GEMINI_API_KEY = "AIzaSyBYPRz8ZDYa87efNmWX7iiatXkooAgvPiU"; // replace with your actual api key
+    const chatContainer = document.getElementById("chat-container");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+    const micBtn = document.getElementById("mic-btn");
+    const voiceStatus = document.getElementById("voice-status");
+    const voiceControlPanel = document.getElementById("voice-control-panel");
+    const voiceInfo = document.getElementById("voice-info");
+
+    // Voice control variables
+    let currentUtterance = null;
+    let isVoicePaused = false;
+    let currentSpeakingMessage = null;
+
+    // Farmer profile data
+    let farmerProfile = {
+      name: '',
+      location: '',
+      state: '',
+      farmSize: '',
+      soilType: '',
+      currentSeason: '',
+      currentCrops: '',
+      experience: '',
+      budget: '',
+      profileComplete: false
+    };
+
+    // Enhanced farming knowledge base with current data
+    const farmingKnowledge = {
+      implements: {
+        'kharif': [
+          { name: 'Tractor', priceRange: '₹4-15 lakh', purpose: 'Primary cultivation, transport' },
+          { name: 'Cultivator', priceRange: '₹15,000-80,000', purpose: 'Soil preparation, weed control' },
+          { name: 'Seed Drill', priceRange: '₹25,000-1.5 lakh', purpose: 'Precise seed placement' },
+          { name: 'Sprayer', priceRange: '₹8,000-50,000', purpose: 'Pesticide/fertilizer application' },
+          { name: 'Weeder', priceRange: '₹5,000-25,000', purpose: 'Weed removal' },
+          { name: 'Harvester', priceRange: '₹8-25 lakh', purpose: 'Crop harvesting' }
+        ],
+        'rabi': [
+          { name: 'Plough', priceRange: '₹28,000-3 lakh', purpose: 'Primary tillage' },
+          { name: 'Harrow', priceRange: '₹20,000-1 lakh', purpose: 'Secondary tillage' },
+          { name: 'Seed Drill', priceRange: '₹25,000-1.5 lakh', purpose: 'Seed sowing' },
+          { name: 'Irrigation Equipment', priceRange: '₹10,000-2 lakh', purpose: 'Water management' },
+          { name: 'Thresher', priceRange: '₹50,000-3 lakh', purpose: 'Grain separation' }
+        ],
+        'zaid': [
+          { name: 'Drip Irrigation', priceRange: '₹40,000-2 lakh/acre', purpose: 'Water efficient irrigation' },
+          { name: 'Mulching Equipment', priceRange: '₹15,000-80,000', purpose: 'Soil moisture retention' },
+          { name: 'Shade Nets', priceRange: '₹8-15/sq meter', purpose: 'Crop protection' },
+          { name: 'Sprinkler System', priceRange: '₹25,000-1.5 lakh', purpose: 'Uniform water distribution' }
+        ]
+      },
+      
+      currentMarketPrices: {
+        'wheat': { price: '₹2,375-2,700/quintal', trend: 'stable', season: 'rabi' },
+        'rice': { price: '₹2,100-2,800/quintal', trend: 'rising', season: 'kharif' },
+        'cotton': { price: '₹6,200-7,500/quintal', trend: 'rising', season: 'kharif' },
+        'sugarcane': { price: '₹350-400/quintal', trend: 'stable', season: 'kharif' },
+        'maize': { price: '₹1,800-2,200/quintal', trend: 'stable', season: 'kharif' },
+        'soybean': { price: '₹4,200-4,800/quintal', trend: 'rising', season: 'kharif' },
+        'groundnut': { price: '₹5,500-6,200/quintal', trend: 'stable', season: 'kharif' },
+        'gram': { price: '₹5,200-5,800/quintal', trend: 'rising', season: 'rabi' },
+        'mustard': { price: '₹5,400-6,000/quintal', trend: 'stable', season: 'rabi' }
+      },
+
+      crops: {
+        'kharif': {
+          'north': [
+            { name: 'Rice', profitability: 'High', waterReq: 'High', mspPrice: '₹2,300/quintal' },
+            { name: 'Maize', profitability: 'Medium', waterReq: 'Medium', mspPrice: '₹2,090/quintal' },
+            { name: 'Cotton', profitability: 'High', waterReq: 'Medium', mspPrice: '₹6,620/quintal' },
+            { name: 'Sugarcane', profitability: 'High', waterReq: 'High', mspPrice: '₹340/quintal' }
+          ],
+          'south': [
+            { name: 'Rice', profitability: 'High', waterReq: 'High', mspPrice: '₹2,300/quintal' },
+            { name: 'Ragi', profitability: 'Medium', waterReq: 'Low', mspPrice: '₹3,846/quintal' },
+            { name: 'Cotton', profitability: 'High', waterReq: 'Medium', mspPrice: '₹6,620/quintal' },
+            { name: 'Groundnut', profitability: 'High', waterReq: 'Medium', mspPrice: '₹6,377/quintal' }
+          ],
+          'west': [
+            { name: 'Cotton', profitability: 'High', waterReq: 'Medium', mspPrice: '₹6,620/quintal' },
+            { name: 'Soybean', profitability: 'High', waterReq: 'Medium', mspPrice: '₹4,600/quintal' },
+            { name: 'Sugarcane', profitability: 'High', waterReq: 'High', mspPrice: '₹340/quintal' },
+            { name: 'Maize', profitability: 'Medium', waterReq: 'Medium', mspPrice: '₹2,090/quintal' }
+          ],
+          'east': [
+            { name: 'Rice', profitability: 'High', waterReq: 'High', mspPrice: '₹2,300/quintal' },
+            { name: 'Jute', profitability: 'Medium', waterReq: 'High', mspPrice: '₹5,050/quintal' },
+            { name: 'Maize', profitability: 'Medium', waterReq: 'Medium', mspPrice: '₹2,090/quintal' }
+          ]
+        },
+        'rabi': {
+          'north': [
+            { name: 'Wheat', profitability: 'High', waterReq: 'Medium', mspPrice: '₹2,425/quintal' },
+            { name: 'Barley', profitability: 'Medium', waterReq: 'Low', mspPrice: '₹1,850/quintal' },
+            { name: 'Gram', profitability: 'High', waterReq: 'Low', mspPrice: '₹5,440/quintal' },
+            { name: 'Mustard', profitability: 'High', waterReq: 'Low', mspPrice: '₹5,650/quintal' }
+          ],
+          'south': [
+            { name: 'Wheat', profitability: 'Medium', waterReq: 'Medium', mspPrice: '₹2,425/quintal' },
+            { name: 'Gram', profitability: 'High', waterReq: 'Low', mspPrice: '₹5,440/quintal' },
+            { name: 'Sunflower', profitability: 'High', waterReq: 'Medium', mspPrice: '₹6,760/quintal' }
+          ],
+          'west': [
+            { name: 'Wheat', profitability: 'High', waterReq: 'Medium', mspPrice: '₹2,425/quintal' },
+            { name: 'Gram', profitability: 'High', waterReq: 'Low', mspPrice: '₹5,440/quintal' },
+            { name: 'Onion', profitability: 'High', waterReq: 'Medium', mspPrice: 'Market-based' }
+          ],
+          'east': [
+            { name: 'Wheat', profitability: 'High', waterReq: 'Medium', mspPrice: '₹2,425/quintal' },
+            { name: 'Barley', profitability: 'Medium', waterReq: 'Low', mspPrice: '₹1,850/quintal' },
+            { name: 'Lentils', profitability: 'High', waterReq: 'Low', mspPrice: '₹6,000/quintal' }
+          ]
+        }
+      },
+      
+      loans: [
+        {
+          name: 'Kisan Credit Card (KCC)',
+          interest: '7.50% (with 2% subvention)',
+          effectiveRate: '5.50% (for prompt repayment)',
+          amount: 'Based on land holding & crop',
+          purpose: 'Crop production, maintenance, post-harvest expenses',
+          provider: 'All scheduled banks, RRBs, Cooperative banks',
+          features: 'Revolving credit, ATM facility, Insurance coverage'
+        },
+        {
+          name: 'PM-KISAN Scheme',
+          amount: '₹6,000 per year (₹2,000 per installment)',
+          purpose: 'Income support to small & marginal farmers',
+          provider: 'Government of India - Direct Benefit Transfer',
+          eligibility: 'All farmer families with cultivable land'
+        },
+        {
+          name: 'Agriculture Infrastructure Fund',
+          amount: 'Up to ₹2 crore per project',
+          interest: '3% interest subvention',
+          purpose: 'Farm-gate infrastructure, community farming assets',
+          provider: 'NABARD, Banks',
+          tenure: 'Up to 10 years with 2 years moratorium'
+        },
+        {
+          name: 'PMFBY Crop Insurance',
+          premium: 'Kharif: 2%, Rabi: 1.5%, Commercial crops: 5%',
+          coverage: 'Sum insured based on scale of finance',
+          purpose: 'Crop loss protection due to natural calamities',
+          provider: 'Insurance companies empaneled by govt'
+        },
+        {
+          name: 'Mudra Loan for Agriculture',
+          amount: 'Up to ₹10 lakh',
+          interest: '8.5-11.60% p.a.',
+          purpose: 'Allied activities, dairy, poultry, fisheries',
+          provider: 'Banks, NBFCs, MFIs'
+        }
+      ],
+
+      marketInfo: {
+        mandis: [
+          'APMC Mandis - Government regulated markets',
+          'eNAM Platform - Online national agriculture market',
+          'Direct marketing to retailers/processors',
+          'Farmer Producer Organizations (FPOs)',
+          'Contract farming with agribusiness companies'
+        ],
+        tips: [
+          'Check daily mandi rates before selling',
+          'Grade and clean produce for better prices',
+          'Use proper packaging and transportation',
+          'Consider collective selling through FPOs',
+          'Time sales to avoid market gluts',
+          'Maintain quality certificates where applicable'
+        ]
+      }
+    };
+
+    // Voice control functions
+    function speakText(text, messageElement) {
+      // Stop any current speech
+      stopVoice();
+      
+      const cleanText = text.replace(/[*#`]/g, '').replace(/\n/g, ' ');
+      currentUtterance = new SpeechSynthesisUtterance(cleanText);
+      currentUtterance.rate = 0.8;
+      currentUtterance.pitch = 1.0;
+      currentSpeakingMessage = messageElement;
+      
+      // Add voice controls to the message
+      if (messageElement) {
+        messageElement.classList.add('speaking');
+        const voiceControls = document.createElement('div');
+        voiceControls.className = 'voice-controls';
+        voiceControls.innerHTML = `
+          <button class="voice-btn" onclick="pauseVoice()">⏸️</button>
+          <button class="voice-btn" onclick="stopVoice()">⏹️</button>
+        `;
+        messageElement.appendChild(voiceControls);
+      }
+      
+      // Show voice control panel
+      voiceControlPanel.classList.add('active');
+      voiceStatus.classList.add('speaking');
+      voiceInfo.textContent = '🔊 AI is speaking...';
+      
+      currentUtterance.onstart = () => {
+        isVoicePaused = false;
+      };
+      
+      currentUtterance.onend = () => {
+        stopVoice();
+      };
+      
+      currentUtterance.onerror = () => {
+        stopVoice();
+      };
+      
+      speechSynthesis.speak(currentUtterance);
+    }
+
+    function pauseVoice() {
+      if (currentUtterance && speechSynthesis.speaking && !isVoicePaused) {
+        speechSynthesis.pause();
+        isVoicePaused = true;
+        voiceInfo.textContent = '⏸️ Speech paused';
+      }
+    }
+
+    function resumeVoice() {
+      if (currentUtterance && isVoicePaused) {
+        speechSynthesis.resume();
+        isVoicePaused = false;
+        voiceInfo.textContent = '🔊 AI is speaking...';
+      }
+    }
+
+    function stopVoice() {
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+      }
+      
+      currentUtterance = null;
+      isVoicePaused = false;
+      
+      // Hide voice controls
+      voiceControlPanel.classList.remove('active');
+      voiceStatus.classList.remove('speaking');
+      
+      // Remove speaking class and voice controls from message
+      if (currentSpeakingMessage) {
+        currentSpeakingMessage.classList.remove('speaking');
+        const voiceControls = currentSpeakingMessage.querySelector('.voice-controls');
+        if (voiceControls) {
+          voiceControls.remove();
+        }
+        currentSpeakingMessage = null;
+      }
+    }
+
+    // Initialize app
+    window.addEventListener("load", () => {
+      const loading = document.getElementById("loading-screen");
+      const avatar = document.getElementById("avatar-popup");
+      const mainApp = document.querySelector(".app-wrapper");
+
+      setTimeout(() => {
+        loading.style.opacity = "0";
+        loading.style.pointerEvents = "none";
+        avatar.style.opacity = "1";
+        avatar.style.pointerEvents = "auto";
+
+        setTimeout(() => {
+          avatar.style.opacity = "0";
+          avatar.style.pointerEvents = "none";
+          mainApp.style.display = "flex";
+          
+          // Show farmer profile form after a brief delay
+          setTimeout(() => {
+            showFarmerProfileForm();
+          }, 1000);
+        }, 3000); 
+      }, 2000);
+    });
+
+    function addMessage(text, sender, isHTML = false) {
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("message", sender);
+      if (isHTML) {
+        msgDiv.innerHTML = text;
+      } else {
+        msgDiv.textContent = text;
+      }
+      chatContainer.appendChild(msgDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      return msgDiv;
+    }
+
+    function showTypingDots() {
+      const dotsHTML = `
+        <div class="message bot typing" id="typing">
+          <div class="typing-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>`;
+      chatContainer.insertAdjacentHTML("beforeend", dotsHTML);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function removeTypingDots() {
+      const typing = document.getElementById("typing");
+      if (typing) typing.remove();
+    }
+
+    function showFarmerProfileForm() {
+      const formHTML = `
+        <div class="farmer-form" id="farmer-profile-form">
+          <h3>🧑‍🌾 Farm Profile Setup</h3>
+          <div class="form-group">
+            <label>Farmer Name:</label>
+            <input type="text" id="farmer-name" placeholder="Enter your name">
+          </div>
+          <div class="form-group">
+            <label>Location (District, State):</label>
+            <input type="text" id="farmer-location" placeholder="e.g., Pune, Maharashtra">
+          </div>
+          <div class="form-group">
+            <label>Farm Size:</label>
+            <select id="farm-size">
+              <option value="">Select farm size</option>
+              <option value="marginal">Marginal (< 1 acre)</option>
+              <option value="small">Small (1-2 acres)</option>
+              <option value="semi-medium">Semi-medium (2-4 acres)</option>
+              <option value="medium">Medium (4-10 acres)</option>
+              <option value="large">Large (> 10 acres)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Soil Type:</label>
+            <select id="soil-type">
+              <option value="">Select soil type</option>
+              <option value="alluvial">Alluvial</option>
+              <option value="black">Black Cotton</option>
+              <option value="red">Red & Yellow</option>
+              <option value="laterite">Laterite</option>
+              <option value="desert">Desert/Arid</option>
+              <option value="mountain">Mountain/Hill</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Current Season:</label>
+            <select id="current-season">
+              <option value="">Select season</option>
+              <option value="kharif">Kharif (June-October)</option>
+              <option value="rabi">Rabi (November-April)</option>
+              <option value="zaid">Zaid (April-June)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Farming Experience:</label>
+            <select id="experience">
+              <option value="">Select experience</option>
+              <option value="new">New Farmer (< 2 years)</option>
+              <option value="intermediate">Intermediate (2-10 years)</option>
+              <option value="experienced">Experienced (> 10 years)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Investment Budget:</label>
+            <select id="budget">
+              <option value="">Select budget range</option>
+              <option value="low">Low (< ₹50,000)</option>
+              <option value="medium">Medium (₹50,000 - ₹2 lakh)</option>
+              <option value="high">High (₹2 lakh - ₹10 lakh)</option>
+              <option value="premium">Premium (> ₹10 lakh)</option>
+            </select>
+          </div>
+          <button class="form-submit" onclick="submitFarmerProfile()">Create My Profile</button>
+        </div>`;
+      
+      chatContainer.insertAdjacentHTML("beforeend", formHTML);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function submitFarmerProfile() {
+      const name = document.getElementById("farmer-name").value;
+      const location = document.getElementById("farmer-location").value;
+      const farmSize = document.getElementById("farm-size").value;
+      const soilType = document.getElementById("soil-type").value;
+      const currentSeason = document.getElementById("current-season").value;
+      const experience = document.getElementById("experience").value;
+      const budget = document.getElementById("budget").value;
+
+      if (!name || !location || !farmSize || !soilType || !currentSeason || !experience || !budget) {
+        alert("Please fill in all fields to get personalized advice!");
+        return;
+      }
+
+      // Update farmer profile
+      farmerProfile = {
+        name,
+        location,
+        farmSize,
+        soilType,
+        currentSeason,
+        experience,
+        budget,
+        profileComplete: true
+      };
+
+      // Remove the form
+      document.getElementById("farmer-profile-form").remove();
+
+      // Show confirmation and quick actions
+      const confirmationMsg = addMessage(`Perfect, ${name}! Your profile is now complete. Based on your ${farmSize} farm in ${location} with ${soilType} soil during ${currentSeason} season and ${budget} budget, I can provide highly personalized farming recommendations with current market data.`, "bot");
+      
+      showQuickActions();
+      showCurrentMarketOverview();
+    }
+
+    function showQuickActions() {
+      const quickActionsHTML = `
+        <div class="message system">
+          <div class="quick-actions">
+            <button class="quick-btn" onclick="askAbout('implements')">🚜 Equipment & Prices</button>
+            <button class="quick-btn" onclick="askAbout('crops')">🌾 Best Crops & MSP</button>
+            <button class="quick-btn" onclick="askAbout('loans')">💰 Loans & Schemes</button>
+            <button class="quick-btn" onclick="askAbout('markets')">📈 Market Prices</button>
+            <button class="quick-btn" onclick="askAbout('weather')">🌤️ Weather Advice</button>
+            <button class="quick-btn" onclick="askAbout('profit')">💡 Profit Analysis</button>
+          </div>
+        </div>`;
+      
+      chatContainer.insertAdjacentHTML("beforeend", quickActionsHTML);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function showCurrentMarketOverview() {
+      const marketHTML = `
+        <div class="message bot">
+          <strong>📊 Today's Market Overview (Sep 8, 2025):</strong>
+          <div class="price-table">
+            <table>
+              <tr><th>Crop</th><th>Current Price</th><th>Trend</th></tr>
+              <tr><td>Wheat</td><td>₹2,375-2,700/q</td><td>📊 Stable</td></tr>
+              <tr><td>Rice</td><td>₹2,100-2,800/q</td><td>📈 Rising</td></tr>
+              <tr><td>Cotton</td><td>₹6,200-7,500/q</td><td>📈 Rising</td></tr>
+              <tr><td>Soybean</td><td>₹4,200-4,800/q</td><td>📈 Rising</td></tr>
+              <tr><td>Gram</td><td>₹5,200-5,800/q</td><td>📈 Rising</td></tr>
+            </table>
+          </div>
+          <small>💡 Prices vary by quality and location. Check local mandi rates before selling.</small>
+        </div>`;
+      
+      chatContainer.insertAdjacentHTML("beforeend", marketHTML);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function askAbout(topic) {
+      const questions = {
+        implements: `What farming equipment do I need for my ${farmerProfile.farmSize} farm with ${farmerProfile.budget} budget?`,
+        crops: `Which crops should I grow in ${farmerProfile.location} during ${farmerProfile.currentSeason} season for maximum profit?`,
+        loans: `What are the best loan options available for my ${farmerProfile.farmSize} farm?`,
+        markets: `Show me current market prices and where to sell crops near ${farmerProfile.location}`,
+        weather: `What weather considerations should I keep in mind for ${farmerProfile.currentSeason} season in ${farmerProfile.location}?`,
+        profit: `Analyze the most profitable crops for my ${farmerProfile.soilType} soil with ${farmerProfile.budget} investment`
+      };
+      
+      userInput.value = questions[topic];
+      sendMessage();
+    }
+
+    function generateAdvancedFarmingAdvice(userMessage) {
+      const message = userMessage.toLowerCase();
+      let advice = "";
+
+      if (message.includes('implement') || message.includes('equipment') || message.includes('tool') || message.includes('machine')) {
+        advice = getImplementsAdviceWithPrices();
+      } else if (message.includes('crop') || message.includes('grow') || message.includes('plant') || message.includes('profit')) {
+        advice = getCropAdviceWithProfitability();
+      } else if (message.includes('loan') || message.includes('credit') || message.includes('finance') || message.includes('scheme')) {
+        advice = getDetailedLoanAdvice();
+      } else if (message.includes('market') || message.includes('price') || message.includes('sell') || message.includes('mandi')) {
+        advice = getCurrentMarketAdvice();
+      } else if (message.includes('weather') || message.includes('rain') || message.includes('season')) {
+        advice = getSeasonalWeatherAdvice();
+      } else {
+        advice = getComprehensiveFarmingAdvice();
+      }
+
+      return advice;
+    }
+
+    function getImplementsAdviceWithPrices() {
+      const season = farmerProfile.currentSeason;
+      const budget = farmerProfile.budget;
+      const farmSize = farmerProfile.farmSize;
+      const implements = farmingKnowledge.implements[season] || [];
+      
+      let advice = `🚜 **Equipment Recommendations for ${season.toUpperCase()} Season**\n\n`;
+      advice += `**Based on your ${farmSize} farm and ${budget} budget:**\n\n`;
+      
+      // Budget-based recommendations
+      const budgetAdvice = {
+        'low': 'Focus on essential hand tools and consider renting expensive equipment',
+        'medium': 'Invest in basic mechanization and power tools',
+        'high': 'Consider purchasing tractors and advanced equipment',
+        'premium': 'Full mechanization with latest technology'
+      };
+      
+      advice += `💰 **Budget Strategy:** ${budgetAdvice[budget]}\n\n`;
+      
+      advice += `**Recommended Equipment with Current Prices:**\n`;
+      implements.forEach(impl => {
+        advice += `• **${impl.name}** - ${impl.priceRange}\n`;
+        advice += `  Purpose: ${impl.purpose}\n`;
+      });
+      
+      advice += `\n📊 **Financing Options:**\n`;
+      advice += `• Bank loans at 8.5-11% interest\n`;
+      advice += `• Government subsidies up to 50% for SC/ST, 40% for others\n`;
+      advice += `• Equipment financing through dealers\n`;
+      advice += `• Cooperative society group purchases\n\n`;
+      
+      advice += `💡 **Smart Tips:**\n`;
+      advice += `• Consider custom hiring services for expensive equipment\n`;
+      advice += `• Join FPOs for bulk equipment purchases\n`;
+      advice += `• Check for government subsidy schemes in your state\n`;
+      advice += `• Maintain equipment properly to ensure longevity`;
+      
+      return advice;
+    }
+
+    function getCropAdviceWithProfitability() {
+      const season = farmerProfile.currentSeason;
+      const location = farmerProfile.location.toLowerCase();
+      const soilType = farmerProfile.soilType;
+      const budget = farmerProfile.budget;
+      
+      let region = 'north';
+      if (location.includes('karnataka') || location.includes('tamil') || location.includes('kerala') || location.includes('andhra') || location.includes('telangana')) {
+        region = 'south';
+      } else if (location.includes('maharashtra') || location.includes('gujarat') || location.includes('rajasthan') || location.includes('goa')) {
+        region = 'west';
+      } else if (location.includes('bengal') || location.includes('odisha') || location.includes('bihar') || location.includes('jharkhand') || location.includes('assam')) {
+        region = 'east';
+      }
+      
+      const crops = farmingKnowledge.crops[season]?.[region] || [];
+      
+      let advice = `🌾 **Profitable Crop Recommendations for ${season.toUpperCase()} Season**\n\n`;
+      advice += `**Location:** ${farmerProfile.location} | **Soil:** ${soilType} | **Budget:** ${budget}\n\n`;
+      
+      advice += `**Top Recommended Crops with Profitability Analysis:**\n\n`;
+      
+      crops.forEach(crop => {
+        const marketPrice = farmingKnowledge.currentMarketPrices[crop.name.toLowerCase()];
+        advice += `🌱 **${crop.name}**\n`;
+        advice += `• MSP: ${crop.mspPrice}\n`;
+        if (marketPrice) {
+          advice += `• Current Market: ${marketPrice.price} (${marketPrice.trend})\n`;
+        }
+        advice += `• Profitability: ${crop.profitability}\n`;
+        advice += `• Water Requirement: ${crop.waterReq}\n\n`;
+      });
+      
+      advice += `📈 **Market Trend Analysis:**\n`;
+      Object.entries(farmingKnowledge.currentMarketPrices).forEach(([crop, data]) => {
+        if (data.season === season) {
+          advice += `• ${crop.charAt(0).toUpperCase() + crop.slice(1)}: ${data.price} - ${data.trend}\n`;
+        }
+      });
+      
+      advice += `\n💰 **Investment & Return Analysis:**\n`;
+      const investmentAdvice = {
+        'low': 'Focus on low-input crops like pulses and millets',
+        'medium': 'Consider cash crops like cotton, sugarcane with moderate inputs',
+        'high': 'Invest in high-value crops with advanced farming techniques',
+        'premium': 'Explore export-quality crops and organic farming'
+      };
+      advice += investmentAdvice[budget];
+      
+      return advice;
+    }
+
+    function getDetailedLoanAdvice() {
+      let advice = `💰 **Comprehensive Loan & Scheme Information (Updated Sep 2025)**\n\n`;
+      
+      farmingKnowledge.loans.forEach(loan => {
+        advice += `**${loan.name}**\n`;
+        if (loan.interest) advice += `• Interest Rate: ${loan.interest}\n`;
+        if (loan.effectiveRate) advice += `• Effective Rate: ${loan.effectiveRate}\n`;
+        if (loan.amount) advice += `• Loan Amount: ${loan.amount}\n`;
+        if (loan.premium) advice += `• Premium: ${loan.premium}\n`;
+        if (loan.coverage) advice += `• Coverage: ${loan.coverage}\n`;
+        if (loan.tenure) advice += `• Tenure: ${loan.tenure}\n`;
+        advice += `• Purpose: ${loan.purpose}\n`;
+        advice += `• Provider: ${loan.provider}\n`;
+        if (loan.features) advice += `• Features: ${loan.features}\n`;
+        if (loan.eligibility) advice += `• Eligibility: ${loan.eligibility}\n`;
+        advice += `\n`;
+      });
+      
+      advice += `📋 **Application Process:**\n`;
+      advice += `1. Visit nearest bank branch with required documents\n`;
+      advice += `2. Documents needed: Land records, Aadhaar, PAN, Bank statements\n`;
+      advice += `3. Fill application form with crop/project details\n`;
+      advice += `4. Bank inspection and verification\n`;
+      advice += `5. Loan approval and disbursement\n\n`;
+      
+      advice += `💡 **Pro Tips for Loan Approval:**\n`;
+      advice += `• Maintain good credit score (750+)\n`;
+      advice += `• Keep all land documents updated\n`;
+      advice += `• Apply early in the season\n`;
+      advice += `• Consider crop insurance along with loans\n`;
+      advice += `• Join FPOs for better loan terms`;
+      
+      return advice;
+    }
+
+    function getCurrentMarketAdvice() {
+      let advice = `📈 **Live Market Information & Selling Strategy**\n\n`;
+      
+      advice += `**Current Market Prices (Sep 8, 2025):**\n`;
+      advice += `<div class="price-table">`;
+      advice += `<table>`;
+      advice += `<tr><th>Commodity</th><th>Price Range</th><th>Trend</th><th>Season</th></tr>`;
+      
+      Object.entries(farmingKnowledge.currentMarketPrices).forEach(([crop, data]) => {
+        const trendIcon = data.trend === 'rising' ? '📈' : data.trend === 'falling' ? '📉' : '📊';
+        advice += `<tr><td>${crop.charAt(0).toUpperCase() + crop.slice(1)}</td><td>${data.price}</td><td>${trendIcon} ${data.trend}</td><td>${data.season}</td></tr>`;
+      });
+      
+      advice += `</table></div>\n\n`;
+      
+      advice += `🏪 **Best Selling Channels:**\n`;
+      farmingKnowledge.marketInfo.mandis.forEach(mandi => {
+        advice += `• ${mandi}\n`;
+      });
+      
+      advice += `\n💡 **Selling Strategy Tips:**\n`;
+      farmingKnowledge.marketInfo.tips.forEach(tip => {
+        advice += `• ${tip}\n`;
+      });
+      
+      advice += `\n📱 **Useful Market Apps:**\n`;
+      advice += `• eNAM - Online trading platform\n`;
+      advice += `• Kisan Suvidha - Market prices & weather\n`;
+      advice += `• AgriApp - Comprehensive farming info\n`;
+      advice += `• Crop In - Market intelligence\n`;
+      advice += `• FarmEasy - Direct buyer connection`;
+      
+      return advice;
+    }
+
+    function getSeasonalWeatherAdvice() {
+      const season = farmerProfile.currentSeason;
+      const location = farmerProfile.location;
+      
+      let advice = `🌤️ **Weather Advisory for ${season.toUpperCase()} Season in ${location}**\n\n`;
+      
+      const seasonalAdvice = {
+        'kharif': {
+          focus: 'Monsoon Management',
+          tips: [
+            'Monitor rainfall patterns and intensity',
+            'Ensure proper field drainage to prevent waterlogging',
+            'Watch for pest outbreaks during humid conditions',
+            'Plan sowing based on monsoon arrival',
+            'Keep emergency pumps ready for excess water removal'
+          ]
+        },
+        'rabi': {
+          focus: 'Winter Crop Protection',
+          tips: [
+            'Protect crops from frost damage using smoke/water spraying',
+            'Monitor for fog-related diseases',
+            'Ensure adequate irrigation during dry spells',
+            'Plan harvesting before temperature rises',
+            'Watch for cold wave warnings'
+          ]
+        },
+        'zaid': {
+          focus: 'Summer Heat Management',
+          tips: [
+            'Implement efficient water management systems',
+            'Use mulching to conserve soil moisture',
+            'Provide shade protection for sensitive crops',
+            'Schedule irrigation during cooler hours',
+            'Monitor for heat stress in crops'
+          ]
+        }
+      };
+      
+      const currentAdvice = seasonalAdvice[season];
+      advice += `**Focus Area:** ${currentAdvice.focus}\n\n`;
+      advice += `**Key Recommendations:**\n`;
+      currentAdvice.tips.forEach(tip => {
+        advice += `• ${tip}\n`;
+      });
+      
+      advice += `\n📱 **Weather Monitoring Tools:**\n`;
+      advice += `• IMD Weather App - Official forecasts\n`;
+      advice += `• Meghdoot App - Agro-meteorological advisories\n`;
+      advice += `• Damini App - Lightning alerts\n`;
+      advice += `• Kisan Suvidha - Weather + market info\n\n`;
+      
+      advice += `⚠️ **Emergency Preparedness:**\n`;
+      advice += `• Keep emergency contact numbers handy\n`;
+      advice += `• Maintain crop insurance coverage\n`;
+      advice += `• Have backup power for irrigation\n`;
+      advice += `• Store emergency supplies (seeds, fertilizers)\n`;
+      advice += `• Know evacuation routes for extreme weather`;
+      
+      return advice;
+    }
+
+    function getComprehensiveFarmingAdvice() {
+      return `🌱 **Comprehensive Farming Strategy for Your ${farmerProfile.farmSize} Farm**\n\n` +
+             `**Immediate Actions:**\n` +
+             `• Soil health testing every 2-3 years\n` +
+             `• Implement crop rotation for soil fertility\n` +
+             `• Adopt integrated pest management\n` +
+             `• Install water conservation systems\n\n` +
+             `**Long-term Planning:**\n` +
+             `• Diversify crops to reduce risk\n` +
+             `• Invest in farm mechanization gradually\n` +
+             `• Build market linkages through FPOs\n` +
+             `• Explore value addition opportunities\n` +
+             `• Maintain detailed farm records\n\n` +
+             `**Technology Adoption:**\n` +
+             `• Use mobile apps for market prices\n` +
+             `• Consider precision farming techniques\n` +
+             `• Adopt organic farming practices\n` +
+             `• Explore drone technology for monitoring`;
+    }
+
+    async function sendMessage() {
+      const input = userInput.value.trim();
+      if (!input) return;
+      
+      // Stop any current speech before sending new message
+      stopVoice();
+      
+      addMessage(input, "user");
+      userInput.value = "";
+      showTypingDots();
+      
+      try {
+        let response;
+        
+        if (farmerProfile.profileComplete) {
+          // Generate advanced farming-specific advice
+          const farmingAdvice = generateAdvancedFarmingAdvice(input);
+          
+          // Enhanced prompt for AI
+          const prompt = `You are Kisan Friend.AI, an advanced farming assistant with access to real-time market data. 
+
+Farmer Profile:
+- Name: ${farmerProfile.name}
+- Location: ${farmerProfile.location}
+- Farm Size: ${farmerProfile.farmSize}
+- Soil Type: ${farmerProfile.soilType}
+- Current Season: ${farmerProfile.currentSeason}
+- Experience: ${farmerProfile.experience}
+- Budget: ${farmerProfile.budget}
+
+Current Market Context (Sep 8, 2025):
+- Wheat: ₹2,375-2,700/quintal (stable)
+- Rice: ₹2,100-2,800/quintal (rising)
+- Cotton: ₹6,200-7,500/quintal (rising)
+- Soybean: ₹4,200-4,800/quintal (rising)
+
+Detailed farming advice generated: ${farmingAdvice}
+
+User question: ${input}
+
+Provide a comprehensive, data-driven response that incorporates current market prices, profitability analysis, and practical implementation steps. Be specific about costs, returns, and timelines. Use the farmer's profile for personalized recommendations.`;
+          
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+              }),
+            }
+          );
+          const data = await res.json();
+          response = data?.candidates?.[0]?.content?.parts?.[0]?.text || farmingAdvice;
+        } else {
+          // Encourage profile completion
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: `You are Kisan Friend.AI. The user hasn't completed their farming profile yet. Encourage them to complete it for personalized advice with current market data. User said: ${input}` }] }]
+              }),
+            }
+          );
+          const data = await res.json();
+          response = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Please complete your farmer profile first to get personalized advice with current market data and pricing information!";
+        }
+        
+        removeTypingDots();
+        const botMessage = addMessage(response, "bot", true);
+        
+        // Enhanced text-to-speech with voice controls
+        speakText(response, botMessage);
+        
+      } catch (err) {
+        removeTypingDots();
+        addMessage("⚠️ I'm experiencing connectivity issues. Please check your internet connection and try again.", "bot");
+        console.error(err);
+      }
+    }
+
+    // Event listeners
+    sendBtn.addEventListener("click", sendMessage);
+    
+    userInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        sendMessage();
+      }
+    });
+
+    micBtn.addEventListener("click", () => {
+      if (!("webkitSpeechRecognition" in window)) {
+        alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
+        return;
+      }
+      
+      // Stop any current speech before starting voice input
+      stopVoice();
+      
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = "en-IN";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        micBtn.classList.add('active');
+        micBtn.innerHTML = "🔴";
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        userInput.value = transcript;
+        micBtn.classList.remove('active');
+        micBtn.innerHTML = "🎤";
+      };
+      
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event);
+        alert("Sorry, I couldn't hear clearly. Please try again or type your question.");
+        micBtn.classList.remove('active');
+        micBtn.innerHTML = "🎤";
+      };
+      
+      recognition.onend = () => {
+        micBtn.classList.remove('active');
+        micBtn.innerHTML = "🎤";
+      };
+      
+      recognition.start();
+    });
+
+    // Stop voice when page is about to unload
+    window.addEventListener('beforeunload', () => {
+      stopVoice();
+    });
+  </script>
+</body>
+</html>
+
